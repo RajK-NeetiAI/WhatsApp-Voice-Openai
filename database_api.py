@@ -1,13 +1,16 @@
+import os
 from datetime import datetime
 from typing import Any
 
 from pymongo import MongoClient
+import gridfs
 
 import config
 
 client = MongoClient(config.CONNECTION_STRING)
 db = client[config.DATABASE_NAME]
 user_collection = db[config.COLLECTION_NAME]
+fs = gridfs.GridFS(db)
 
 
 def update_messages(sender_id: int, query: str, response: str, message_count: int) -> bool:
@@ -84,3 +87,25 @@ def get_user(sender_id: str) -> Any:
     if not result:
         None
     return result
+
+
+def save_audio(audio_file_path: str) -> str:
+    file_name = audio_file_path.split('/')[-1]
+    with open(file_name, 'rb') as f:
+        contents = f.read()
+    fs.put(contents, filename=file_name)
+    os.unlink(audio_file_path)
+
+    return file_name
+
+
+def get_audio_local_file_path(file_name: str) -> str:
+    for grid_out in fs.find({'filename': file_name}):
+        data = grid_out.read()
+    local_file_path = f'{config.OUTPUT_DIR}/{file_name}'
+    with open(file_name, 'wb') as file:
+        file.write(data)
+
+    return local_file_path
+
+print(get_audio_local_file_path('sample.mp3'))

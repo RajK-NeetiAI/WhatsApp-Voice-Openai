@@ -1,11 +1,11 @@
 from datetime import datetime
 
-from flask import Flask, request
+from flask import Flask, request, send_file
 
-from database_api import create_user, update_messages, get_user
-from utils import generate_messages
+from database_api import create_user, update_messages, get_user, save_audio, get_audio_local_file_path
+from utils import generate_messages, generate_audio_and_get_file_path
 from openai_api import chat_completion, transcript_audio
-from twilio_api import send_message
+# from twilio_api import send_message, send_media_message
 import config
 
 app = Flask(__name__)
@@ -14,6 +14,12 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def home():
     return 'OK', 200
+
+
+@app.route('/get/audio/<file_name>', methods=['GET'])
+def get_audio(file_name: str):
+    local_file_path = get_audio_local_file_path(file_name)
+    return send_file(local_file_path, mimetype='audio/ogg')
 
 
 @app.route('/twilio', methods=['POST'])
@@ -45,7 +51,7 @@ def twilio():
 
         print(query)
         print(sender_id)
-        
+
         response = chat_completion(messages)
 
         print(response)
@@ -71,7 +77,21 @@ def twilio():
                 'created_at': datetime.now().strftime('%d/%m/%Y, %H:%M')
             }
             create_user(user)
-        send_message(sender_id, response)
+
+        if config.REPLT_TYPE == 'TEXT':
+            # send_message(sender_id, response)
+            pass
+        else:
+            '''TODO
+            [ ] generate audio from the response
+            [ ] save the audio on mongodb
+            [ ] send the media url 
+            '''
+            ogg_file_path = generate_audio_and_get_file_path(response)
+            file_name = save_audio(ogg_file_path)
+            media_url = f'{config.BASE_URL}/get/audio/{file_name}'
+            # send_media_message(sender_id, media_url)
+
         print('Request success.')
     except:
         print('Request failed.')

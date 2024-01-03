@@ -22,3 +22,20 @@ def send_message(to: str, message: str) -> None:
         body=message,
         to=to
     )
+
+
+def send_media_message(to: str, media_url: str) -> None:
+    '''
+    Send message to a Telegram user.
+    Parameters:
+        - to(str): sender whatsapp number in this whatsapp:+919558515995 form
+        - media_url(str): media URL to send
+    Returns:
+        - None
+    '''
+
+    _ = client.messages.create(
+        from_=config.FROM,
+        media_url=[media_url],
+        to=to
+    )
