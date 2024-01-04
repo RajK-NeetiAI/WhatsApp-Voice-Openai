@@ -27,6 +27,7 @@ def generate_messages(messages: list, query: str) -> list:
             'content': query
         }
     )
+
     return formated_messages
 
 
@@ -39,4 +40,5 @@ def generate_audio_and_get_file_path(text: str) -> str:
     )
     ogg_file_path = f'{config.OUTPUT_DIR}/{uuid.uuid1()}.ogg'
     save(audio, ogg_file_path)
+    
     return ogg_file_path

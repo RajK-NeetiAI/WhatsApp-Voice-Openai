@@ -16,13 +16,14 @@ def chat_completion(messages: list[dict]) -> str:
             model=config.GPT_MODEL,
             messages=messages
         )
-
-        return completion['choices'][0]['message']['content']
-    except:
+        return completion.choices[0].message.content
+    except Exception as e:
+        print('Error at chat_completion...')
+        print(e)
         return config.ERROR_MESSAGE
 
 
-def transcript_audio(media_url: str) -> dict:
+def transcript_audio(media_url: str) -> dict[str, str]:
     try:
         ogg_file_path = f'{config.OUTPUT_DIR}/{uuid.uuid1()}.ogg'
         data = requests.get(media_url)
@@ -35,16 +36,16 @@ def transcript_audio(media_url: str) -> dict:
         os.unlink(ogg_file_path)
         os.unlink(mp3_file_path)
         transcript = openai.audio.transcriptions.create(
-            model='whisper-1', file=audio_file, api_key=config.OPENAI_API_KEY, response_format='text')
+            model='whisper-1', file=audio_file, response_format='text')
 
         return {
             'status': 1,
-            'transcript': transcript['text']
+            'transcript': transcript
         }
     except Exception as e:
         print('Error at transcript_audio...')
         print(e)
         return {
             'status': 0,
-            'transcript': ''
+            'transcript': config.ERROR_MESSAGE
         }
